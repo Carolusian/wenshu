@@ -55,7 +55,7 @@ class WenShuGui(Frame):
         quit_btn.pack(side=TOP, padx=5, pady=5)
 
     def center_window(self):
-        w = 200
+        w = 400
         h = 80
 
         sw = self.master.winfo_screenwidth()
