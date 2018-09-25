@@ -48,16 +48,42 @@ def open_website(url):
     return browser
 
 
+def is_finished(browser):
+    finish_text = '无符合条件的数据...'
+    sleep_secs = 15
+    time.sleep(sleep_secs)
+    result_list = browser.find_element_by_id('resultList')
+    # Refresh if no result found
+    if finish_text in result_list.text:
+        logger.info('Try refresh to reload content')
+        browser.refresh()
+        time.sleep(sleep_secs)
+
+    # If still not result found, finish downloading
+    result_list = browser.find_element_by_id('resultList')
+    if finish_text in result_list.text:
+        return True
+    return False
+
+
 def download_docs(browser, save_dir='./', click_next_page=False): 
     if click_next_page:
-        pass
+        next_page = browser.find_elements(By.XPATH, '//*[@id="pageNumber"]/a[contains(text(), "下一页")]')
+        next_page[0].click()
+        if is_finished(browser):
+            logger.info('Finished downloading documents in this page.')
+            return
 
     link_xpath = '//*[@class="dataItem"]'
+    keywords_elems = browser.find_elements(By.XPATH, '//*[@class="contentCondtion"]')
+    subfolder = '-'.join([el.text for el in keywords_elems])
     elems = browser.find_elements(By.XPATH, link_xpath)
     for el in elems:
-        save_doc(browser, el, save_dir)
+        save_doc(browser, el, os.path.join(save_dir, subfolder))
         time.sleep(1)
-    logger.info('Finished downloading documents in this page.')
+
+    # Goto next page after this page is download
+    download_docs(browser, save_dir, click_next_page=True)
 
 
 @retry(times=5, delay=5, allowed_exceptions=IndexError)
